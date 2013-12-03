@@ -1,0 +1,144 @@
+@3330.292625ms: Reset found. Entering reset state.
+@3330.307375ms: SWJ-DP Switch
+@3330.312438ms: Reset found. Entering reset state.
+@3330.326938ms: 4 Idle cycles. Quitting reset state.
+@3330.330000ms: Reset found. Entering reset state.
+@3330.344688ms: SWJ-DP Switch
+@3330.349750ms: Reset found. Entering reset state.
+@3330.364250ms: 4 Idle cycles. Quitting reset state.
+@3330.366375ms: OK   (1)-Debug port -Read  at ADR=0 DAT=0bb11477 -    IDCODE       
+@3330.398375ms: OK   (1)-Debug port -Write at ADR=0 DAT=0000001f -    ABORT        
+@3330.427250ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3330.454938ms: OK   (1)-Debug port -Write at ADR=1 DAT=50000000 -    CTRL/STAT    
+@3330.483750ms: OK   (1)-Debug port -Read  at ADR=1 DAT=f0000040 -    CTRL/STAT    
+@3330.517063ms: OK   (1)-Debug port -Write at ADR=1 DAT=54000000 -    CTRL/STAT    
+@3330.546188ms: OK   (1)-Debug port -Write at ADR=1 DAT=50000f00 -    CTRL/STAT    
+@3330.575563ms: OK   (1)-Debug port -Read  at ADR=1 DAT=f0000040 -    CTRL/STAT    
+@3330.610813ms: OK   (1)-Access port-Write at ADR=0 DAT=23000052 -    CSW - Control/Status 
+@3330.640000ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3330.676188ms: OK   (1)-Access port-Write at ADR=1 DAT=e000edf0 -    TAR - Transfer Address 
+@3330.706375ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3330.733938ms: OK   (1)-Access port-Write at ADR=0 DAT=a05f0003 -    BD0 - Banked Data 0 
+@3330.763438ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3330.802187ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3330.829750ms: OK   (1)-Access port-Write at ADR=1 DAT=e000ed00 -    TAR - Transfer Address 
+@3330.860125ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3330.887875ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3330.922813ms: OK   (1)-Debug port -Read  at ADR=3 DAT=410cc200 -    READBUFFER   
+@3330.963375ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3330.991000ms: OK   (1)-Access port-Write at ADR=1 DAT=e000edf0 -    TAR - Transfer Address 
+@3331.021125ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3331.048938ms: OK   (1)-Access port-Write at ADR=3 DAT=00000001 -    BD3 - Banked Data 3 
+@3331.078437ms: OK   (1)-Debug port -Read  at ADR=3 DAT=04770021 -    READBUFFER   
+@3331.117188ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3331.152125ms: OK   (1)-Debug port -Read  at ADR=3 DAT=03030003 -    READBUFFER   
+@3331.193938ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3331.228875ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00030003 -    READBUFFER   
+@3331.270125ms: OK   (1)-Access port-Write at ADR=3 DAT=01000000 -    BD3 - Banked Data 3 
+@3331.299625ms: OK   (1)-Debug port -Read  at ADR=3 DAT=04770021 -    READBUFFER   
+@3331.338125ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3331.365750ms: OK   (1)-Access port-Write at ADR=1 DAT=e0002000 -    TAR - Transfer Address 
+@3331.396063ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3331.423813ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3331.458750ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000041 -    READBUFFER   
+@3331.498813ms: OK   (1)-Access port-Write at ADR=0 DAT=00000003 -    BD0 - Banked Data 0 
+@3331.528313ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3331.566438ms: OK   (1)-Access port-Write at ADR=2 DAT=00000000 -    BD2 - Banked Data 2 
+@3331.595938ms: OK   (1)-Debug port -Read  at ADR=3 DAT=e00ff003 -    READBUFFER   
+@3331.634125ms: OK   (1)-Access port-Write at ADR=3 DAT=00000000 -    BD3 - Banked Data 3 
+@3331.663625ms: OK   (1)-Debug port -Read  at ADR=3 DAT=04770021 -    READBUFFER   
+@3331.702125ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3331.729750ms: OK   (1)-Access port-Write at ADR=1 DAT=e0002010 -    TAR - Transfer Address 
+@3331.759875ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3331.787438ms: OK   (1)-Access port-Write at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3331.817000ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3331.854938ms: OK   (1)-Access port-Write at ADR=1 DAT=00000000 -    BD1 - Banked Data 1 
+@3331.884437ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3331.923625ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3331.951187ms: OK   (1)-Access port-Write at ADR=1 DAT=e0001000 -    TAR - Transfer Address 
+@3331.981563ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3332.009312ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3332.044250ms: OK   (1)-Debug port -Read  at ADR=3 DAT=20000000 -    READBUFFER   
+@3332.084750ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3332.112375ms: OK   (1)-Access port-Write at ADR=1 DAT=e0001020 -    TAR - Transfer Address 
+@3332.142500ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3332.170125ms: OK   (1)-Access port-Write at ADR=1 DAT=0000001f -    BD1 - Banked Data 1 
+@3332.199625ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3332.237875ms: OK   (1)-Access port-Read  at ADR=1 DAT=00000000 -    BD1 - Banked Data 1 
+@3332.272812ms: OK   (1)-Debug port -Read  at ADR=3 DAT=0000001f -    READBUFFER   
+@3332.313250ms: OK   (1)-Access port-Write at ADR=2 DAT=00000000 -    BD2 - Banked Data 2 
+@3332.342750ms: OK   (1)-Debug port -Read  at ADR=3 DAT=e00ff003 -    READBUFFER   
+@3332.381250ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3332.408875ms: OK   (1)-Access port-Write at ADR=1 DAT=e0001030 -    TAR - Transfer Address 
+@3332.439000ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3332.466563ms: OK   (1)-Access port-Write at ADR=2 DAT=00000000 -    BD2 - Banked Data 2 
+@3332.496062ms: OK   (1)-Debug port -Read  at ADR=3 DAT=e00ff003 -    READBUFFER   
+@3332.535500ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3332.563062ms: OK   (1)-Access port-Write at ADR=1 DAT=e000edf0 -    TAR - Transfer Address 
+@3332.593438ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3332.621187ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3332.656063ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00030003 -    READBUFFER   
+@3332.697938ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3332.732875ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00030003 -    READBUFFER   
+@3332.774000ms: OK   (1)-Access port-Write at ADR=3 DAT=00000001 -    BD3 - Banked Data 3 
+@3332.803500ms: OK   (1)-Debug port -Read  at ADR=3 DAT=04770021 -    READBUFFER   
+@3332.841812ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3332.876688ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00030003 -    READBUFFER   
+@3332.917438ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3332.945062ms: OK   (1)-Access port-Write at ADR=1 DAT=50000210 -    TAR - Transfer Address 
+@3332.975438ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3333.003125ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3333.038063ms: OK   (1)-Debug port -Read  at ADR=3 DAT=0000003f -    READBUFFER   
+@3333.078250ms: OK   (1)-Access port-Write at ADR=0 DAT=0000003f -    BD0 - Banked Data 0 
+@3333.107750ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3333.146313ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3333.173875ms: OK   (1)-Access port-Write at ADR=1 DAT=e000ed00 -    TAR - Transfer Address 
+@3333.204000ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3333.231813ms: OK   (1)-Access port-Write at ADR=3 DAT=05fa0004 -    BD3 - Banked Data 3 
+@3333.261313ms: OK   (1)-Debug port -Read  at ADR=3 DAT=04770021 -    READBUFFER   
+@3333.300000ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3333.327563ms: OK   (1)-Access port-Write at ADR=1 DAT=e000edf0 -    TAR - Transfer Address 
+@3333.357937ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3333.385688ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3333.420563ms: OK   (1)-Debug port -Read  at ADR=3 DAT=03030003 -    READBUFFER   
+@3333.463500ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3333.498437ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00030003 -    READBUFFER   
+@3333.538875ms: OK   (1)-Access port-Write at ADR=3 DAT=01000000 -    BD3 - Banked Data 3 
+@3333.568375ms: OK   (1)-Debug port -Read  at ADR=3 DAT=04770021 -    READBUFFER   
+@3333.606313ms: OK   (1)-Access port-Write at ADR=1 DAT=00000010 -    BD1 - Banked Data 1 
+@3333.637250ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3333.675313ms: OK   (1)-Access port-Read  at ADR=0 DAT=00030003 -    BD0 - Banked Data 0 
+@3333.716688ms: OK   (1)-Access port-Read  at ADR=2 DAT=00030003 -    BD2 - Banked Data 2 
+@3333.751500ms: OK   (1)-Debug port -Read  at ADR=3 DAT=c1000000 -    READBUFFER   
+@3333.792500ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3333.827438ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00030003 -    READBUFFER   
+@3333.869313ms: OK   (1)-Access port-Read  at ADR=0 DAT=00000000 -    BD0 - Banked Data 0 
+@3333.904188ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00030003 -    READBUFFER   
+@3333.951187ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3333.978813ms: OK   (1)-Access port-Write at ADR=1 DAT=50000100 -    TAR - Transfer Address 
+@3334.008938ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3334.036562ms: OK   (1)-Access port-Write at ADR=0 DAT=00000059 -    BD0 - Banked Data 0 
+@3334.066063ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3334.104000ms: OK   (1)-Access port-Write at ADR=0 DAT=00000016 -    BD0 - Banked Data 0 
+@3334.133500ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3334.171375ms: OK   (1)-Access port-Write at ADR=0 DAT=00000088 -    BD0 - Banked Data 0 
+@3334.200938ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3334.239562ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000000 -    SELECT       
+@3334.267188ms: OK   (1)-Access port-Write at ADR=1 DAT=50000000 -    TAR - Transfer Address 
+@3334.297500ms: OK   (1)-Debug port -Write at ADR=2 DAT=00000010 -    SELECT       
+@3334.325438ms: OK   (1)-Access port-Read  at ADR=1 DAT=00000000 -    BD1 - Banked Data 1 
+@3334.360375ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000061 -    READBUFFER   
+@3334.400438ms: OK   (1)-Access port-Write at ADR=1 DAT=00000061 -    BD1 - Banked Data 1 
+@3334.429938ms: OK   (1)-Debug port -Read  at ADR=3 DAT=00000000 -    READBUFFER   
+@3334.471562ms: OK   (1)-Access port-Write at ADR=2 DAT=00000001 -    BD2 - Banked Data 2 
+@3334.501063ms: ERROR(7)-Debug port -Read  at ADR=3 DAT=------------   READBUFFER   
+@3334.516437ms: Reset found. Entering reset state.
+@3334.531125ms: SWJ-DP Switch
+@3334.536187ms: Reset found. Entering reset state.
+@3334.550750ms: 4 Idle cycles. Quitting reset state.
+@3334.552875ms: ERROR(7)-Debug port -Read  at ADR=3 DAT=------------   READBUFFER   
+@3334.568250ms: Reset found. Entering reset state.
+@3334.582937ms: SWJ-DP Switch
+@3334.588000ms: Reset found. Entering reset state.
+@3334.602500ms: 4 Idle cycles. Quitting reset state.
+@3334.604625ms: ERROR(7)-Debug port -Read  at ADR=3 DAT=------------   READBUFFER   
