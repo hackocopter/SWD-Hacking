@@ -1,0 +1,186 @@
+
+
+
+Chip erase?
+
+Make sure flash is not busy and halt CPU
+
+Block 1
+@3310.184188ms: SWD Reset occured.
+@3310.459875ms:Read  Buf(0x5000c01c)=0x00000000   <- read undocumented ISP register
+@3310.553875ms:Write BD (0xe000edf0)=0xa05f0003   <- Debug Halting Control Reg STOP
+@3310.583375ms:Read  Buf(0xe000edf0)=0x00000000
+
+Do something with debug access port
+
+0xe0002000  Debug access port / Breakpoint unit
+
+Block2
+@3312.198438ms:Write BD (0xe0002008)=0x00000000
+@3312.227937ms:Read  Buf(0xe0002008)=0xe00ff003
+@3312.266625ms:Write BD (0xe000200c)=0x00000000
+@3312.296125ms:Read  Buf(0xe000200c)=0x04770021
+@3312.420437ms:Write BD (0xe0002010)=0x00000000
+@3312.449938ms:Read  Buf(0xe0002010)=0x00000000
+@3312.488438ms:Write BD (0xe0002014)=0x00000000
+@3312.517938ms:Read  Buf(0xe0002014)=0x00000000
+@3312.677750ms:Read  Buf(0xe0002008)=0x00000000
+@3312.754000ms:Read  Buf(0xe000200c)=0x00000000
+@3312.915937ms:Read  Buf(0xe0002010)=0x00000000
+@3312.992125ms:Read  Buf(0xe0002014)=0x00000000
+
+Block3 
+
+Write Powercon. Oscillators enabled?
+
+@3315.189313ms:Write BD (0x50000100)=0x00000059		; Unlock registers with magic sequence
+@3315.218813ms:Read  Buf(0x50000100)=0x00000000
+@3315.256750ms:Write BD (0x50000100)=0x00000016
+@3315.286250ms:Read  Buf(0x50000100)=0x00000000
+@3315.324187ms:Write BD (0x50000100)=0x00000088
+@3315.353688ms:Read  Buf(0x50000100)=0x00000000
+@3315.512938ms:Read  Buf(0x50000200)=0x0000001c
+
+
+@3315.698313ms:Read  Buf(0x5000c000)=0x00000032     ; ISP control 
+@3315.738438ms:Write BD (0x5000c000)=0x00000033		; ISP Control=0x33 Set bit 1= Enable ISP function... really?
+@3315.767938ms:Read  Buf(0x5000c000)=0x00000000
+@3315.927375ms:Read  Buf(0x5000c01c)=0x00000000
+@3315.967688ms:Write BD (0x5000c01c)=0x00000001		; 0x5000C01C=1 Interesting. Undocumented register in Flash controller 
+@3315.997188ms:Read  Buf(0x5000c01c)=0x04770021		; Buffer after write - "unpredictable"
+
+@3316.156188ms:Read  Buf(0x5000c000)=0x00000033
+@3316.232000ms:Read  Buf(0x5000c000)=0x00000033		; check ISPFF=0
+@3316.400563ms:Read  Buf(0x5000c010)=0x00000000		; ISP not busy?
+@3316.527437ms:Write BD (0x5000c00c)=0x00000026     ; ISP Command=0x26. Undocumented combination. Enable page erase and program
+@3316.556938ms:Read  Buf(0x5000c00c)=0x04770021		; Buffer after write - "unpredictable"
+@3316.595000ms:Write BD (0x5000c004)=0x00000000		; ISP Address=0x00000000 Start of APROM
+@3316.624500ms:Read  Buf(0x5000c004)=0x00000000
+@3316.748562ms:Write BD (0x5000c010)=0x00000001		; ISP Trigger=1 -> Start ISP Operation
+@3316.778125ms:Read  Buf(0x5000c010)=0x00000000		; First read is invalid? better replicate or trouble looms
+@3316.852250ms:Read  Buf(0x5000c010)=0x00000001		; Operation is ongoing while ISP Trigger reads 
+
+... poll poll poll ...
+
+@3326.586938ms:Read  Buf(0x5000c010)=0x00000001
+@3326.664813ms:Read  Buf(0x5000c010)=0x00000001
+@3326.742625ms:Read  Buf(0x5000c010)=0x00000001
+@3326.820500ms:Read  Buf(0x5000c010)=0x00000001
+@3326.898375ms:Read  Buf(0x5000c010)=0x00000000		; and done. After ~10ms
+@3327.060438ms:Read  Buf(0x5000c000)=0x00000033		; check ISPFF=0	
+@3327.224875ms:Read  Buf(0x5000c010)=0x00000000
+
+Is LDROM empty?
+@3327.351688ms:Write BD (0x5000c00c)=0x00000000		; ISP Command = Read
+@3327.381188ms:Read  Buf(0x5000c00c)=0x04770021		; Buffer after write - "unpredictable"
+@3327.419250ms:Write BD (0x5000c004)=0x00100000		; ISP Address=0x00100000 LDROM
+@3327.448750ms:Read  Buf(0x5000c004)=0x00000000
+@3327.572875ms:Write BD (0x5000c010)=0x00000001 	; ISP Trigger=1 -> Start ISP Operation
+@3327.602375ms:Read  Buf(0x5000c010)=0x00000000		
+@3327.676500ms:Read  Buf(0x5000c010)=0x00000000		; already done
+@3327.838563ms:Read  Buf(0x5000c000)=0x00000033		; check ISPFF=0	
+@3327.914625ms:Read  Buf(0x5000c008)=0xffffffff		; ISP Data register ... looks empty
+@3328.078625ms:Read  Buf(0x5000c010)=0x00000000
+
+Is APROM empty?
+@3328.205438ms:Write BD (0x5000c00c)=0x00000000		; ISP Command = Read
+@3328.234937ms:Read  Buf(0x5000c00c)=0x04770021	    ; Buffer after write - "unpredictable"
+@3328.273000ms:Write BD (0x5000c004)=0x00000000		; ISP Address=0x00100000 APROM
+@3328.302500ms:Read  Buf(0x5000c004)=0x00000000
+@3328.426625ms:Write BD (0x5000c010)=0x00000001		; ISP Trigger=1 -> Start ISP Operation
+@3328.456125ms:Read  Buf(0x5000c010)=0x00000000
+@3328.530250ms:Read  Buf(0x5000c010)=0x00000000		; done
+@3328.692375ms:Read  Buf(0x5000c000)=0x00000033
+@3328.768437ms:Read  Buf(0x5000c008)=0xffffffff		; ISP Data register ... looks empty	
+@3328.932375ms:Read  Buf(0x5000c010)=0x00000000
+
+Is config empty?
+@3329.059250ms:Write BD (0x5000c00c)=0x00000000		; ISP Command = Read
+@3329.088750ms:Read  Buf(0x5000c00c)=0x04770021	
+@3329.126813ms:Write BD (0x5000c004)=0x00300000		; ISP Address=0x00100000 Config0
+@3329.156313ms:Read  Buf(0x5000c004)=0x00000000
+@3329.280438ms:Write BD (0x5000c010)=0x00000001
+@3329.309938ms:Read  Buf(0x5000c010)=0x00000000
+@3329.384063ms:Read  Buf(0x5000c010)=0x00000000
+@3329.546125ms:Read  Buf(0x5000c000)=0x00000033
+@3329.622188ms:Read  Buf(0x5000c008)=0xffffffff		; Is empty,too
+@3329.787875ms:Read  Buf(0x5000c010)=0x00000000
+
+@3329.949625ms:Read  Buf(0x5000c000)=0x00000033
+@3329.989687ms:Write BD (0x5000c000)=0x00000032		; Disable ISP
+@3330.019188ms:Read  Buf(0x5000c000)=0x00000000
+@3330.178625ms:Read  Buf(0x5000c01c)=0x00000001
+@3330.218938ms:Write BD (0x5000c01c)=0x00000000		; Write 0 to undocumented register
+
+@3330.248437ms:Read  Buf(0x5000c01c)=0x04770021
+
+... and done
+
+@3330.326938ms: SWD Reset occured.
+@3330.364250ms: SWD Reset occured.
+
+Reset CPU
+
+@3330.640000ms:Read  Buf(0x5000c01c)=0x00000000
+@3330.733938ms:Write BD (0xe000edf0)=0xa05f0003		; Halt CPU
+@3330.763438ms:Read  Buf(0xe000edf0)=0x00000000
+@3330.922813ms:Read  Buf(0xe000ed00)=0x410cc200		; Read CPUID
+@3331.048938ms:Write BD (0xe000edfc)=0x00000001
+@3331.078437ms:Read  Buf(0xe000edfc)=0x04770021
+@3331.152125ms:Read  Buf(0xe000edf0)=0x03030003
+@3331.228875ms:Read  Buf(0xe000edf0)=0x00030003
+@3331.270125ms:Write BD (0xe000edfc)=0x01000000
+@3331.299625ms:Read  Buf(0xe000edfc)=0x04770021
+@3331.458750ms:Read  Buf(0xe0002000)=0x00000041		; Doing something with the debug port
+@3331.498813ms:Write BD (0xe0002000)=0x00000003
+@3331.528313ms:Read  Buf(0xe0002000)=0x00000000
+@3331.566438ms:Write BD (0xe0002008)=0x00000000
+@3331.595938ms:Read  Buf(0xe0002008)=0xe00ff003
+@3331.634125ms:Write BD (0xe000200c)=0x00000000
+@3331.663625ms:Read  Buf(0xe000200c)=0x04770021
+@3331.787438ms:Write BD (0xe0002010)=0x00000000
+@3331.817000ms:Read  Buf(0xe0002010)=0x00000000
+@3331.854938ms:Write BD (0xe0002014)=0x00000000
+@3331.884437ms:Read  Buf(0xe0002014)=0x00000000
+@3332.044250ms:Read  Buf(0xe0001000)=0x20000000
+@3332.170125ms:Write BD (0xe0001024)=0x0000001f
+@3332.199625ms:Read  Buf(0xe0001024)=0x00000000
+@3332.272812ms:Read  Buf(0xe0001024)=0x0000001f
+@3332.313250ms:Write BD (0xe0001028)=0x00000000
+@3332.342750ms:Read  Buf(0xe0001028)=0xe00ff003
+@3332.466563ms:Write BD (0xe0001038)=0x00000000
+@3332.496062ms:Read  Buf(0xe0001038)=0xe00ff003
+@3332.656063ms:Read  Buf(0xe000edf0)=0x00030003
+@3332.732875ms:Read  Buf(0xe000edf0)=0x00030003
+@3332.774000ms:Write BD (0xe000edfc)=0x00000001
+@3332.803500ms:Read  Buf(0xe000edfc)=0x04770021
+@3332.876688ms:Read  Buf(0xe000edf0)=0x00030003
+@3333.038063ms:Read  Buf(0x50000210)=0x0000003f
+@3333.078250ms:Write BD (0x50000210)=0x0000003f
+@3333.107750ms:Read  Buf(0x50000210)=0x00000000
+@3333.231813ms:Write BD (0xe000ed0c)=0x05fa0004	  ; Request system level reset		
+@3333.261313ms:Read  Buf(0xe000ed0c)=0x04770021
+@3333.420563ms:Read  Buf(0xe000edf0)=0x03030003	  ; cpu is halted
+@3333.498437ms:Read  Buf(0xe000edf0)=0x00030003
+@3333.538875ms:Write BD (0xe000edfc)=0x01000000
+@3333.568375ms:Read  Buf(0xe000edfc)=0x04770021
+@3333.606313ms:Write BD (0xe000edf4)=0x00000010
+@3333.751500ms:Read  Buf(0xe000edf8)=0xc1000000
+@3333.827438ms:Read  Buf(0xe000edf0)=0x00030003
+@3333.904188ms:Read  Buf(0xe000edf0)=0x00030003
+@3334.036562ms:Write BD (0x50000100)=0x00000059  ; unlock system registers 
+@3334.066063ms:Read  Buf(0x50000100)=0x00000000
+@3334.104000ms:Write BD (0x50000100)=0x00000016	 
+@3334.133500ms:Read  Buf(0x50000100)=0x00000000
+@3334.171375ms:Write BD (0x50000100)=0x00000088
+@3334.200938ms:Read  Buf(0x50000100)=0x00000000
+@3334.360375ms:Read  Buf(0x50000004)=0x00000061
+@3334.400438ms:Write BD (0x50000004)=0x00000061
+@3334.429938ms:Read  Buf(0x50000004)=0x00000000
+@3334.471562ms:Write BD (0x50000008)=0x00000001	; Reset CPU
+
+Lots of SWD read errors here since SWD controller resets as well (140ms)
+
+@3334.550750ms: SWD Reset occured.
+@3334.602500ms: SWD Reset occured.
+
