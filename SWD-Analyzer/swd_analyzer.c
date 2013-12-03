@@ -1,6 +1,6 @@
 
 /*
-    SWD Analyzer v0.2
+    SWD Analyzer v0.3
     
     Dec 2, 2013 cpldcpu
     based on code by chris
@@ -12,7 +12,7 @@
     http://www.pjrc.com/arm/pdf/doc/ARM_debug.pdf
 */
 
-#define VERSION_MINOR 2
+#define VERSION_MINOR 3
 #define VERSION_MAJOR 0
 
 #include <stdio.h>
@@ -32,6 +32,7 @@ double           timerorigin;
 double           timestamps[64];
 int              minperiod; // minimum clk period
 int              verbose;
+int              translateregacc;
 
 #define     CLKMASK     0x02
 #define     DATMASK     0x01
@@ -79,10 +80,14 @@ int swd(qword dataRE,qword dataFE)
  unsigned  int dat,par;
  unsigned  int datre,parre; 
  char*id="";
- static byte bank;
  int       datavalid;
- 
 
+// Emulate MEM-AP states
+ static         byte bank;
+ static unsigned int TAR;
+ static unsigned int LastBD;
+ static unsigned int Addrinc;    // TAR Autoincrement  00=off 01=increment on each read/write (Bit 4 and 5 of CSW-Reg
+ 
  header = dataRE>>(64-8);
  dap	= lsb(1,1,dataRE);
  read 	= lsb(1,2,dataRE);
@@ -132,28 +137,31 @@ int swd(qword dataRE,qword dataFE)
  else if(bank==0xf) 	id=ap_ff[addr];
 
  
-    printf("@%fms: %s-",timestamps[0],ack_t[ack]);
-    
-    datavalid=1;
-    
-    if (ack==7||ack==2||ack==4) datavalid=0;    // read acccess failed, data will not be valid
-       
-    if (datavalid)
+    if (verbose>0)
     {
-        printf("%s-%s at ADR=%i DAT=%.8x -", dap?"Access port":"Debug port ",read?"Read ":"Write",addr,dat);
-     
-        if (parity(dat)!=par) {printf("PAR!");} else {printf("   ");}
-        printf(" %-12s ",id);  
+        printf("@%fms: %s-",timestamps[0],ack_t[ack]);
         
-    } else
-    {
-        printf("%s-%s at ADR=%i DAT=------------  ", dap?"Access port":"Debug port ",read?"Read ":"Write",addr);
-    
-        printf(" %-12s ",id);      
+        datavalid=1;
+        
+        if (ack==7||ack==2||ack==4) datavalid=0;    // read acccess failed, data will not be valid
+           
+        if (datavalid)
+        {
+            printf("%s-%s at ADR=%i DAT=%.8x -", dap?"Access port":"Debug port ",read?"Read ":"Write",addr,dat);
+         
+            if (parity(dat)!=par) {printf("PAR!");} else {printf("   ");}
+            printf(" %-12s ",id);  
+            
+        } else
+        {
+            printf("%s-%s at ADR=%i DAT=------------  ", dap?"Access port":"Debug port ",read?"Read ":"Write",addr);
+        
+            printf(" %-12s ",id);      
+        }
+
+          printf("\n");
     }
-
-      printf("\n");
-
+    
     //abort    
     if (ack==7)  return 8+4+1;
       
@@ -162,10 +170,49 @@ int swd(qword dataRE,qword dataFE)
     
     if (ack==2||ack==4) return 8+4+1;
     
-    // TODO
-    if(!dap&&addr==2&&!read) bank=(dat>>4)&0xf; // bank selection for AP access , should i check parity error ???
-  
+    // Emulate states
+    // control register accecss
+    
+    if(!dap&&addr==2&&!read) bank=(dat>>4)&0xf; // bank selection for AP access , should i check parity error ??? 
     if (bank>1&&bank<15) printf("MEM-AP bank %i selection invalid?!?\n",bank);
+    
+    // TAR register write
+    if (bank==0&&dap&&addr==1&&!read) TAR=dat;
+    
+    // BD access
+    if (bank==1&&dap) LastBD=addr;
+ 
+    // Access to CSW
+    if (bank==0&&dap&&addr==0&&!read) 
+    {
+            // TAR Autoincrement  00=off 01=increment on each read/write (Bit 4 and 5 of CSW-Reg
+            Addrinc=(dat>>4)&3;            
+            if (verbose>1) printf("Addirc set to:%i%\n",Addrinc);            
+     }
+     
+     
+    if (translateregacc) {    
+        // Write to banked register    
+        if (bank==1&&dap&&!read) printf("@%fms:Write BD (0x%.8x)=0x%.8x\n",timestamps[0],(TAR&0xFFFFFFF0)+LastBD*4,dat);
+        // Write via DRW
+        if (bank==0&&dap&&addr==3&&!read) printf("@%fms:Write DRW(0x%.8x)=0x%.8x\n",timestamps[0],(TAR&0xFFFFFFFF),dat);
+        // Read via DRW
+        if (bank==0&&dap&&addr==3&&read) printf("@%fms:Read  DRW(0x%.8x)=0x%.8x\n",timestamps[0],(TAR&0xFFFFFFFF),dat);
+        
+        // Read from readbuffer
+        if (addr==3&&!dap&&read) printf("@%fms:Read  Buf(0x%.8x)=0x%.8x\n",timestamps[0],(TAR&0xFFFFFFF0)+LastBD*4,dat);
+        
+        
+     }
+
+     // Access to DRW
+    if (bank==0&&dap&&addr==3) 
+    {
+        if (Addrinc==1) TAR+=4;
+    }   
+
+     // 
+    
  return 8+4+1+32+1;
 }
 
@@ -230,6 +277,7 @@ int getnextperiod(void)
 int main(int argc,char**argv) 
 { 
     verbose=2;
+    translateregacc=1;
 
     // 4 print everything
     // 3 dump raw packet data if valid
@@ -340,7 +388,15 @@ int main(int argc,char**argv)
                     unsigned long long buftemp=bufferRE;
                     while (!(buftemp>>63)) {buftemp<<=1; idlecycles++;}
                     
-                      if (verbose>1) printf("@%fms: %i Idle cycles. Quitting reset state.\n",timestamps[0],idlecycles); 
+                      if (verbose>1) 
+                      {     
+                            printf("@%fms: %i Idle cycles. Quitting reset state.\n",timestamps[0],idlecycles); 
+                      }
+                      else
+                      {
+                            printf("@%fms: SWD Reset occured.\n",timestamps[0]); 
+
+                      }
                       inreset=0;
                       discardbits=idlecycles;
                     
