@@ -59,12 +59,15 @@ qword lsb(char len, char offset, qword dat)
 
 #define tblsize(tbl)	(sizeof(tbl)/sizeof(tbl[0]))
 
-char *dap_id[]={ "IDCODE","ABORT","/STAT","DP-CTRL","WIRE-CTRL","WIRE-CTRL","READ_RESENT","SELECT","BUFFER","BUFFER"};
-char *ap_0 []={ "CSW/Control", "TAR/Transfer" , "", "DRW/Data" };
-char *ap_1 []={ "BD0/Bank"  , "BD1/Bank" , "BD2/Bank" ,"BD3/Bank" };
-char *ap_ff[]={ "","CFG/Configuration","BASE/Base Address","IDR/Identification"};
-char *ack_t []={ "ERROR(0)","OK   (1)","WAIT (2)","UNDEF(3)","FAULT(4)","UNDEF(5)","UNDEF(6)","ERROR(7)"};
+//char *dap_id[]={ "IDCODE","ABORT","CTRL/STAT","DP-CTRL","WIRE-CTRL","WIRE-CTRL","READ_RESENT","SELECT","BUFFER","BUFFER"};  // Debugport registers
+char *dap_id[]={ "IDCODE","ABORT","CTRL/STAT","CTRL/STAT","SELECT","SELECT","READBUFFER","ERR (RDBUFFER)"};  // Debugport registers
 
+char *ack_t []={ "ERROR(0)","OK   (1)","WAIT (2)","UNDEF(3)","FAULT(4)","UNDEF(5)","UNDEF(6)","ERROR(7)"};  // acknowledgements
+
+
+char *ap_0 []={ "CSW - Control/Status", "TAR - Transfer Address" , "RESERVED", "DRW - Data R/W" };
+char *ap_1 []={ "BD0 - Banked Data 0"  , "BD1 - Banked Data 1" , "BD2 - Banked Data 2" ,"BD3 - Banked Data 3" };
+char *ap_ff[]={ "RESERVED","CFG - Configuration","BASE - Base Address","IDR - Identification"};
 
 // start - DAP/AP - W/R - adr[2:3] - Parity - Stop - Park - Trn - ACK W - Ack R - ACK Busy - Trn - Data32 - Parity --
 //   1		X		X		XX         X       	0		1	 Z     X         X        X       Z     X32        X
@@ -96,10 +99,7 @@ int swd(qword dataRE,qword dataFE)
  {          // Read from target Trn at end
     dat	= lsb(32,8+3,dataFE);       // one clock cycle earlier
     par	= lsb(1,8+3+32,dataFE);
- 
-    datre	= lsb(32,8+4,dataRE);
-    parre	= lsb(1,8+4+32,dataRE);
- } else
+  } else
  {         // write to target Trn between ack and data
     dat	= lsb(32,8+4+1,dataRE);
     par	= lsb(1,8+4+1+32,dataRE);
@@ -129,29 +129,21 @@ int swd(qword dataRE,qword dataFE)
  if(!dap) 				id=dap_id[(addr<<1)|(!read)];
  else if(bank==0) 		id=ap_0 [addr];
  else if(bank==1) 		id=ap_1 [addr];
- else if(bank==0xff) 	id=ap_ff[addr];
+ else if(bank==0xf) 	id=ap_ff[addr];
 
  
     printf("@%fms: %s-",timestamps[0],ack_t[ack]);
     
     datavalid=1;
     
-    if (read&&(ack==0||ack==7)) datavalid=0;    // read acccess failed, data will not be valid
-    if (ack==2) datavalid=0;                    // Wait - bus is idling in any case
-    
-    
+    if (ack==7||ack==2||ack==4) datavalid=0;    // read acccess failed, data will not be valid
+       
     if (datavalid)
     {
         printf("%s-%s at ADR=%i DAT=%.8x -", dap?"Access port":"Debug port ",read?"Read ":"Write",addr,dat);
      
-        if (parity(dat)!=par) {printf("PAR!");} else {printf("OK  ");}
+        if (parity(dat)!=par) {printf("PAR!");} else {printf("   ");}
         printf(" %-12s ",id);  
-
-        if (verbose>2) 
-        {
-            printf("RE-DAT=%.8x-",datre);
-            if (parity(datre)!=parre) {printf("PAR!");} else {printf("OK  ");}
-        }
         
     } else
     {
@@ -162,21 +154,18 @@ int swd(qword dataRE,qword dataFE)
 
       printf("\n");
 
-    
-    // abort
-    if (read&&(ack==0||ack==7))  return 8+4+1;
+    //abort    
+    if (ack==7)  return 8+4+1;
       
-    // This is only true when "sticky overrun behavior" is not enabled. It seems to be enabled on Nu-link all the time
-    // See page 5-2 in ARM doc
+    // This is only true when "sticky overrun behavior" is not enabled.
+    // TODO:Implement sticky
     
-    // if (ack==2) return 8+4+1;
- 
-    // If response is undefined, Nulink seems to immediately cancel the access and reset
-    if (ack==3||ack==5||ack==6) return 8+1+3+1;
-
+    if (ack==2||ack==4) return 8+4+1;
+    
     // TODO
     if(!dap&&addr==2&&!read) bank=(dat>>4)&0xf; // bank selection for AP access , should i check parity error ???
   
+    if (bank>1&&bank<15) printf("MEM-AP bank %i selection invalid?!?\n",bank);
  return 8+4+1+32+1;
 }
 
