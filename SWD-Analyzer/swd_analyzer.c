@@ -1,6 +1,6 @@
 
 /*
-    SWD Analyzer
+    SWD Analyzer v0.2
     
     Dec 2, 2013 cpldcpu
     based on code by chris
@@ -9,10 +9,15 @@
     
     Based on:
     http://sourceforge.net/apps/mediawiki/stm32primer2swd/index.php?title=Main_Page#SWD_Packet_Construction
+    http://www.pjrc.com/arm/pdf/doc/ARM_debug.pdf
 */
+
+#define VERSION_MINOR 2
+#define VERSION_MAJOR 0
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 typedef unsigned char 		byte;
 typedef unsigned short 		word;
@@ -25,12 +30,15 @@ unsigned char    lastbyte;
 int              firstedge;
 double           timerorigin;
 double           timestamps[64];
+int              minperiod; // minimum clk period
+int              verbose;
 
 #define     CLKMASK     0x02
 #define     DATMASK     0x01
 #define     SAMPLERATE  16000000
 
 #define     SWD_RESETCOND   0xFFFFFFFFFFFFC000
+#define     IDLETHRESHOLD   10               // in ms
 
 unsigned int parity(unsigned int dat) 
 { 
@@ -49,35 +57,13 @@ qword lsb(char len, char offset, qword dat)
 }
 
 
-int eof;
-int pos;
-int verbose;
-
-
-void dump_(dword x) { 
-int i=32;
-printf(" ");
-	for(i=8;i--;x>>=1) printf("%d",x&1);
-printf("_");
-	for(i=8;i--;x>>=1) printf("%d",x&1);
-printf("_");
-	for(i=8;i--;x>>=1) printf("%d",x&1);
-printf("_");
-	for(i=8;i--;x>>=1) printf("%d",x&1);
-printf(" ");
-}
-
-void dump(dword x) { int i=32;
- x=lsb(32,32,x);
- dump_(x);
-}
-
 #define tblsize(tbl)	(sizeof(tbl)/sizeof(tbl[0]))
 
-char* dap_id[]={ "IDCODE","ABORT","/STAT","DP-CTRL","WIRE-CTRL","WIRE-CTRL","READ_RESENT","SELECT","BUFFER","BUFFER"};
-char* ap_0 []={ "CSW/Control", "TAR/Transfer" , "", "DRW/Data" };
-char* ap_1 []={ "BD0/Bank"  , "BD1/Bank" , "BD2/Bank" ,"BD3/Bank" };
-char* ap_ff[]={ "","CFG/Configuration","BASE/Base Address","IDR/Identification"};
+char *dap_id[]={ "IDCODE","ABORT","/STAT","DP-CTRL","WIRE-CTRL","WIRE-CTRL","READ_RESENT","SELECT","BUFFER","BUFFER"};
+char *ap_0 []={ "CSW/Control", "TAR/Transfer" , "", "DRW/Data" };
+char *ap_1 []={ "BD0/Bank"  , "BD1/Bank" , "BD2/Bank" ,"BD3/Bank" };
+char *ap_ff[]={ "","CFG/Configuration","BASE/Base Address","IDR/Identification"};
+char *ack_t []={ "ERROR(0)","OK   (1)","WAIT (2)","UNDEF(3)","FAULT(4)","UNDEF(5)","UNDEF(6)","ERROR(7)"};
 
 
 // start - DAP/AP - W/R - adr[2:3] - Parity - Stop - Park - Trn - ACK W - Ack R - ACK Busy - Trn - Data32 - Parity --
@@ -91,27 +77,26 @@ int swd(qword dataRE,qword dataFE)
  unsigned  int datre,parre; 
  char*id="";
  static byte bank;
+ int       datavalid;
  
- //if(!((data>>63)&1)) return 1; // start bit ?
-// puts("DBG>");
-
-/*
-if (verbose&2) {
- dump(data>>32);  
- dump(data);  puts("");
-}
-*/
 
  header = dataRE>>(64-8);
  dap	= lsb(1,1,dataRE);
  read 	= lsb(1,2,dataRE);
  addr	= lsb(2,3,dataRE); 
- ack 	= lsb(3,8+1,dataRE);
+ //ack 	= lsb(3,8+1,dataFE);
+ ack 	= lsb(3,8,dataFE);
+ 
+ // Note: The target data is sampled on the falling edge of the _previous_ clock cycle. This
+ // is to avoid glitches due to cheap logic analyzers that are unable to trigger on the clock 
+ // signal. However, this method may fail at high SWD frequencies, when logic delays add up
+ // to a sum equal to or greater than half a clock cycle.
  
  if (read==1)
  {          // Read from target Trn at end
-    dat	= lsb(32,8+4,dataFE);
-    par	= lsb(1,8+4+32,dataFE);
+    dat	= lsb(32,8+3,dataFE);       // one clock cycle earlier
+    par	= lsb(1,8+3+32,dataFE);
+ 
     datre	= lsb(32,8+4,dataRE);
     parre	= lsb(1,8+4+32,dataRE);
  } else
@@ -121,16 +106,6 @@ if (verbose&2) {
     datre=0;
     parre=0;
  }
-
- //if(header&2) return puts("stop error"),1; // test stop bit
- 
- //if(parity(header&0x7c)) return printf("parity error header\n"),1;
- 
-// if(!ack) return printf("Ack error %i\n",ack),1; 
- 
- //if (ack==7) return printf("Protocol error ack=7 \n"),8+4+1; 
- 
- //if (ack==7) return 8+4+1; // protcoll error, dont output
  
  if (verbose>2)
  {
@@ -150,54 +125,58 @@ if (verbose&2) {
     }
     printf("\n");
  }
-
  
  if(!dap) 				id=dap_id[(addr<<1)|(!read)];
  else if(bank==0) 		id=ap_0 [addr];
  else if(bank==1) 		id=ap_1 [addr];
  else if(bank==0xff) 	id=ap_ff[addr];
- 
- 
- if (ack==7) 
- {
-    printf("@%fms: protocol error ack=7 - ",timestamps[0]);
-    printf("attempted: SWD(%d) %s %s  = %#x %s\n",addr, dap?"APACC":"DPACC",read?"Read":"Write", dat,id);
-    return 8+4+1+32+1;
- } 
- 
-  if(ack==0) 
- {
-    printf("@%fms: protocol error ack=0 - ",timestamps[0]);
-    printf("attempted: SWD(%d) %s %s  = %#x %s\n",addr, dap?"APACC":"DPACC",read?"Read":"Write", dat,id);
-    return 8+4+1+32+1;
- } 
- 
-   if(ack==4) 
- {
-    printf("@%fms: fault ack=4 - ",timestamps[0]);
-    printf("attempted: SWD(%d) %s %s  = %#x %s\n",addr, dap?"APACC":"DPACC",read?"Read":"Write", dat,id);
-    return 8+4+1+32+1;
- } 
- 
- if(ack==2) return printf("@%fms: wait ack=2\n",timestamps[0]),8+4+1; // wait
- 
-// if(parity(dat)!=par) printf("data parity error");
 
+ 
+    printf("@%fms: %s-",timestamps[0],ack_t[ack]);
+    
+    datavalid=1;
+    
+    if (read&&(ack==0||ack==7)) datavalid=0;    // read acccess failed, data will not be valid
+    if (ack==2) datavalid=0;                    // Wait - bus is idling in any case
+    
+    
+    if (datavalid)
+    {
+        printf("%s-%s at ADR=%i DAT=%.8x -", dap?"Access port":"Debug port ",read?"Read ":"Write",addr,dat);
+     
+        if (parity(dat)!=par) {printf("PAR!");} else {printf("OK  ");}
+        printf(" %-12s ",id);  
 
- printf("@%fms: ack:%i SWD(%d) %s %s  = %#x %s  ",timestamps[0],ack,addr, dap?"APACC":"DPACC",read?"Read":"Write", dat,id);
+        if (verbose>2) 
+        {
+            printf("RE-DAT=%.8x-",datre);
+            if (parity(datre)!=parre) {printf("PAR!");} else {printf("OK  ");}
+        }
+        
+    } else
+    {
+        printf("%s-%s at ADR=%i DAT=------------  ", dap?"Access port":"Debug port ",read?"Read ":"Write",addr);
+    
+        printf(" %-12s ",id);      
+    }
 
- if(parity(dat)!=par) printf("Bad parity FE ");
+      printf("\n");
+
+    
+    // abort
+    if (read&&(ack==0||ack==7))  return 8+4+1;
+      
+    // This is only true when "sticky overrun behavior" is not enabled. It seems to be enabled on Nu-link all the time
+    // See page 5-2 in ARM doc
+    
+    // if (ack==2) return 8+4+1;
  
- if (read)
- {
-    printf("dat RE=%X ",datre);
-    if(parity(datre)!=parre) printf("Bad parity RE ");
- }
- 
- printf("\n");
- 
- if(!dap&&addr==2&&!read) bank=(dat>>4)&0xf; // bank selection for AP access , should i check parity error ???
- 
+    // If response is undefined, Nulink seems to immediately cancel the access and reset
+    if (ack==3||ack==5||ack==6) return 8+1+3+1;
+
+    // TODO
+    if(!dap&&addr==2&&!read) bank=(dat>>4)&0xf; // bank selection for AP access , should i check parity error ???
+  
  return 8+4+1+32+1;
 }
 
@@ -221,6 +200,7 @@ int getnextperiod(void)
     int bitsout=0;
     int bitcount=0;
     unsigned char nextbyte=0;
+    int clk=0;
     
     // Wait for low
     while (lastbyte&CLKMASK)
@@ -229,12 +209,15 @@ int getnextperiod(void)
         samplecount++;
         if (feof(inputfile)) return -1;
     }
+
     
     while (bitcount<2)
     {
+        clk++;
         nextbyte=fgetc(inputfile);
         samplecount++;
         if (feof(inputfile)) return -1;
+        
         
         if ((lastbyte^nextbyte)&CLKMASK)        // detect clk transition
         {
@@ -246,9 +229,11 @@ int getnextperiod(void)
             }
             bitsout=(bitsout<<1) | (!!(nextbyte&DATMASK));            
             bitcount++;        
-            lastbyte=nextbyte;
+            lastbyte=nextbyte;                      
         }            
     }
+    
+    if (clk<minperiod) {minperiod=clk;}
     
     return bitsout;
 }
@@ -259,11 +244,10 @@ int main(int argc,char**argv)
 
     // 4 print everything
     // 3 dump raw packet data if valid
-    // 2 show reset as well
+    // 2 show reset and idle times as well
     // 1 clk data, invalid packets
     // 0 only valid packets (omit IDCODE hammering etc.)
         
-    
     if (argc<2) 
     {
         printf("Fatal error: no input file.\n");        
@@ -271,7 +255,7 @@ int main(int argc,char**argv)
     }
     if (!strcmp(argv[1],"--help"))
     {
-        printf("SWD Protocol Analyzer v0.1\n\n");
+        printf("SWD Protocol Analyzer v%i.%i\n\n",VERSION_MAJOR,VERSION_MINOR);
         printf("Usage: swd_analzyer [options] file...\n");
         printf("Options:\n");
         printf("  --help\t\tPrint this information\n");
@@ -285,21 +269,34 @@ int main(int argc,char**argv)
         return -1;
     }
 
+    printf("SWD Protocol Analyzer v%i.%i\n\n",VERSION_MAJOR,VERSION_MINOR);
+    printf("Analyzing File: %s\n",argv[1]);
+    printf("=========================================================================\n");
+    
+    
     lastbyte=0;
     samplecount=0;
     totalbits=0;
     failbits=0;
     firstedge=0;
+    minperiod=1<<30;
     
     
      int                     discardbits=64;
      unsigned long long      bufferRE=0,bufferFE=0;
      int                     inreset=0;   // In reset state?
      int                     totalerrorbits=0;
+     int                     i;
+     
+     for (i=0; i<64; i++) timestamps[i]=0;
      
      while (1)
      {
-        int inp,i;
+        int inp;
+        double oldtime,newtime;
+        
+        oldtime=timestamps[discardbits-1];
+        
         while (discardbits-->0)
         {
             inp=getnextperiod();
@@ -311,11 +308,15 @@ int main(int argc,char**argv)
             for (i=0; i<63; i++) timestamps[i]=timestamps[i+1];
             timestamps[63]=((double)samplecount/SAMPLERATE-timerorigin)*1000;            
         }
-
-        // error reading more bits   
+        newtime=timestamps[0];
+        
+        if ((newtime-oldtime)>IDLETHRESHOLD) 
+        {
+            if (verbose>1) printf("@%fms: Bus idle for %.4fms.\n",timestamps[0],(double)(newtime-oldtime));
+        }
+        
         if (inp==-1) break;
         
-  //     if (totalbits>5000) break;
         
         // detect reset = 50 cycles while swdio=1
         if ((bufferRE&SWD_RESETCOND)==SWD_RESETCOND)
@@ -325,7 +326,6 @@ int main(int argc,char**argv)
 
             if (verbose>1) printf("@%fms: Reset found. Entering reset state.\n",timestamps[0]);
             discardbits=50;
-            //printf("next :%X\n",(bufferRE<<50)>>(64-8));
             failbits=0;
             inreset=1;   
             continue;
@@ -367,10 +367,11 @@ int main(int argc,char**argv)
    
         unsigned long header=(bufferRE>>(64-8));
   
-        // Only process data if parity is correct and both start and stop bit are found.    
+        // Only process data if parity is correct and both start and stop bit are found and total packet timing is below threshold!
         // Header= 1abcdP01 where P=a^b^c^d
         
-        if ((!parity(header&0x7c)) && ((header&0x83)==0x81)) 
+        
+        if ((!parity(header&0x7c)) && ((header&0x83)==0x81) && ((timestamps[8+4+1-1]-timestamps[0])<IDLETHRESHOLD)) 
         {
               if (failbits) printf("Errorbits: %i\n",failbits);
               totalerrorbits+=failbits;
@@ -389,10 +390,13 @@ int main(int argc,char**argv)
    
     printf("===============================================================\n");
     printf("Final statistics:\n");
-    printf("Total samples analyzed:%i\nTotal sample time:%fms\n",samplecount, ((float)samplecount/SAMPLERATE)*1000);
-    printf("Total number of bits extracted: %i\n",totalbits);
-    printf("Total number of bit errors:%i\nFraction of biterrors %f%%\n",totalerrorbits,(float)totalerrorbits*100/totalbits);
-    
+    printf("Total samples analyzed:%i\nTotal sample time:%fms\n",samplecount, ((float)samplecount/SAMPLERATE-timerorigin)*1000);
+    printf("Total number of bits extracted: %i\n",totalbits/2);
+    printf("Total number of bit errors:%i\nFraction of biterrors %f%%\n",totalerrorbits,(float)totalerrorbits*100/totalbits/2);
+        
+    printf("Shortest clock cycle in number of samples:%i\n",minperiod);
+    printf("Maximum SWD CLK frequency: %f kHz\n",(float)SAMPLERATE/minperiod/1000);
+
     fclose(inputfile);
 }
 
