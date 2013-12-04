@@ -1,8 +1,8 @@
 
 /*
-    SWD Analyzer v0.3
+    SWD Analyzer v0.4
     
-    Dec 2, 2013 cpldcpu
+    Dec 2-4, 2013 cpldcpu
     based on code by chris
    
     http://www.mikrocontroller.net/topic/309185    
@@ -12,7 +12,7 @@
     http://www.pjrc.com/arm/pdf/doc/ARM_debug.pdf
 */
 
-#define VERSION_MINOR 3
+#define VERSION_MINOR 4
 #define VERSION_MAJOR 0
 
 #include <stdio.h>
@@ -301,7 +301,7 @@ int getnextperiod(void)
 int main(int argc,char**argv) 
 { 
     
-    verbose=4;
+    verbose=0;
     // 4 Bitstream: Dump clocked bitstream
     // 3 Link-Level: Dump raw data of valid packets
     // 2 SWD-Protocol: Show reset and idle times
